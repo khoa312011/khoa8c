@@ -24,7 +24,8 @@
         }
         img {
             max-width: 100%;
-            height: auto;
+            max-height: 400px; 
+            object-fit: contain;
             margin-top: 10px;
             border-radius: 5px;
         }
@@ -119,7 +120,10 @@
                         document.getElementById("progressBar").style.width = progress + "%";
                         document.getElementById("progressBar").innerText = progress + "%";
                     }
-                }
+                },
+                tessedit_char_whitelist: '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZáàảãạăắằẳẵặâấầẩẫậéèẻẽẹêếềểễệíìỉĩịóòỏõọôốồổỗộơớờởỡợúùủũụưứừửữựýỳỷỹỵ',
+                classify_bln_numeric_mode: 0 // Tắt chế độ chỉ nhận dạng số
+            })
             }).then(({ data: { text } }) => {
                 document.getElementById("outputText").value = text;
                 document.getElementById("convertButton").disabled = false;
