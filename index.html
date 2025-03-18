@@ -1,16 +1,147 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>khoa8c</title>
-
-        
+    <title>OCR Image to Text</title>
+    <script src="https://unpkg.com/tesseract.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #ddd;
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background: #4caf50;
+            text-align: center;
+            color: white;
+            font-size: 12px;
+            line-height: 20px;
+        }
+        button {
+            padding: 10px;
+            margin-top: 10px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:disabled {
+            background: gray;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
 <body>
-    <h1></h1>
-    <a href="https://docs.google.com/presentation/d/1NHLow1XXaZnwv1rp7VYS886_kKshr3_d/edit?usp=drive_link&ouid=109032341409212574758&rtpof=true&sd=true" download>Tải file PowerPoint(đã làm)</a>
-    <a href="https://docs.google.com/presentation/d/1IoQzCJBBga_H9FvIKwxMmBtB5NPgXqqh/edit?usp=drive_link&ouid=109032341409212574758&rtpof=true&sd=true" download>Tải file PowerPoint(bản mẫu 1)</a>
-    <a href="https://docs.google.com/presentation/d/1-axiZoWXVK8oxmd8KUpqJ1CboNKqT-qN/edit?usp=sharing&ouid=109032341409212574758&rtpof=true&sd=true" download>Tải file PowerPoint(bản mẫu 2)</a>
+
+    <div class="container">
+        <h2>Chuyển đổi hình ảnh thành văn bản</h2>
+        <input type="file" id="imageInput" accept="image/*">
+        <br>
+        <select id="languageSelect">
+            <option value="eng">Tiếng Anh</option>
+            <option value="vie">Tiếng Việt</option>
+            <option value="eng+vie">Anh + Việt</option>
+        </select>
+        <br>
+        <img id="previewImage" style="display:none;" />
+        <br>
+        <button id="convertButton" disabled>Chuyển đổi thành văn bản</button>
+        <div class="progress" id="progressContainer" style="display: none;">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+        <textarea id="outputText" placeholder="Kết quả hiển thị tại đây..." readonly></textarea>
+        <button id="downloadButton" style="display: none;">Tải về văn bản</button>
+    </div>
+
+    <script>
+        let imageFile = null;
+
+        document.getElementById("imageInput").addEventListener("change", function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                imageFile = file;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById("previewImage").src = e.target.result;
+                    document.getElementById("previewImage").style.display = "block";
+                    document.getElementById("convertButton").disabled = false;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById("convertButton").addEventListener("click", function() {
+            if (!imageFile) return;
+
+            const language = document.getElementById("languageSelect").value;
+            document.getElementById("convertButton").disabled = true;
+            document.getElementById("progressContainer").style.display = "block";
+            document.getElementById("progressBar").style.width = "0%";
+            document.getElementById("progressBar").innerText = "0%";
+
+            Tesseract.recognize(URL.createObjectURL(imageFile), language, {
+                logger: (m) => {
+                    if (m.status === "recognizing text") {
+                        const progress = Math.floor(m.progress * 100);
+                        document.getElementById("progressBar").style.width = progress + "%";
+                        document.getElementById("progressBar").innerText = progress + "%";
+                    }
+                }
+            }).then(({ data: { text } }) => {
+                document.getElementById("outputText").value = text;
+                document.getElementById("convertButton").disabled = false;
+                document.getElementById("downloadButton").style.display = "block";
+            }).catch((err) => {
+                console.error(err);
+                document.getElementById("outputText").value = "Lỗi nhận dạng văn bản. Vui lòng thử lại!";
+                document.getElementById("convertButton").disabled = false;
+            });
+        });
+
+        document.getElementById("downloadButton").addEventListener("click", function() {
+            const text = document.getElementById("outputText").value;
+            const element = document.createElement("a");
+            const file = new Blob([text], { type: "text/plain" });
+            element.href = URL.createObjectURL(file);
+            element.download = "recognized_text.txt";
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        });
+    </script>
 
 </body>
 </html>
